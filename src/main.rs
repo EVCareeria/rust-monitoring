@@ -10,6 +10,7 @@ fn main() {
     cpu_info(&mut sys);
 }
 
+
 fn memory_info(sys: &mut System) {
     
     // Please note that we use "new_all" to ensure that all lists of
@@ -51,4 +52,9 @@ fn system_meta_data() {
     println!("System kernel version:   {:?}", System::kernel_version());
     println!("System OS version:       {:?}", System::os_version());
     println!("System host name:        {:?}", System::host_name());
+    
+}
+
+fn network_data() {
+
 }
