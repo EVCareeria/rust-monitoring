@@ -1,21 +1,26 @@
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, mpsc};
 
 use sysinfo::{
     Components, Disks, Networks, System,
 };
 
 fn main() {
+    let (tx, rx) = mpsc::channel();
     let sys = Arc::new(Mutex::new(System::new_all()));
 
     let sys_clone = Arc::clone(&sys);
-    std::thread::spawn(move || {
+    let join_handle = std::thread::spawn(move || {
         let mut sys = sys_clone.lock().unwrap(); // Lock the mutex to access sys
         memory_info(&mut sys);
+        tx.send("Messaging is working").unwrap();
     });
-    let mut sys = sys.lock().unwrap();
     system_meta_data();
-    cpu_info(&mut sys);
     network_data();
+    join_handle.join().expect("thread did not panic");
+    let mut sys = sys.lock().unwrap();
+    cpu_info(&mut sys);
+    let response = rx.recv().unwrap();
+    print!("{response}");
 }
 
 
@@ -36,7 +41,7 @@ fn memory_info(sys: &mut System) {
     println!("used memory : {} gigabytes", sys.used_memory());
     println!("total swap  : {} gigabytes", sys.total_swap());
     println!("used swap   : {} gigabytes", sys.used_swap());
-        
+
 }
 
 fn cpu_info(sys: &mut System) {
