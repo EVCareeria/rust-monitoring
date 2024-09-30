@@ -1,13 +1,21 @@
+use std::sync::{Arc, Mutex};
+
 use sysinfo::{
     Components, Disks, Networks, System,
 };
 
 fn main() {
-    println!("Hello, world!");
-    let mut sys = System::new_all();
-    memory_info(&mut sys);
+    let sys = Arc::new(Mutex::new(System::new_all()));
+
+    let sys_clone = Arc::clone(&sys);
+    std::thread::spawn(move || {
+        let mut sys = sys_clone.lock().unwrap(); // Lock the mutex to access sys
+        memory_info(&mut sys);
+    });
+    let mut sys = sys.lock().unwrap();
     system_meta_data();
     cpu_info(&mut sys);
+    network_data();
 }
 
 
@@ -56,5 +64,14 @@ fn system_meta_data() {
 }
 
 fn network_data() {
-
+    let networks = Networks::new_with_refreshed_list();
+    for (interface_name, data) in &networks {
+    println!(
+        "{interface_name}: {} B (down) / {} B (up)",
+        data.total_received(),
+        data.total_transmitted(),
+    );
+    // If you want the amount of data received/transmitted since last call
+    // to `Networks::refresh`, use `received`/`transmitted`.
+    }
 }
