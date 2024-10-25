@@ -1,28 +1,50 @@
-use std::sync::{Arc, Mutex, mpsc};
+use crate::shared_types::*;
 
-use sysinfo::{
-    Components, Disks, Networks, System,
-};
+mod constants;
+mod shared_types;
+mod network_packets;
+mod modules;
 
-fn main() {
-    let (tx, rx) = mpsc::channel();
-    let sys = Arc::new(Mutex::new(System::new_all()));
-
-    let sys_clone = Arc::clone(&sys);
-    let join_handle = std::thread::spawn(move || {
-        let mut sys = sys_clone.lock().unwrap(); // Lock the mutex to access sys
-        memory_info(&mut sys);
-        tx.send("Messaging is working").unwrap();
-    });
-    system_meta_data();
-    network_data();
-    join_handle.join().expect("thread did not panic");
-    let mut sys = sys.lock().unwrap();
-    cpu_info(&mut sys);
-    let response = rx.recv().unwrap();
-    print!("{response}");
+struct response_data {
+    
 }
 
+
+
+#[macro_export]
+macro_rules! newlineprint {
+    ($message:expr) => {
+        println!("\n{}", $message);
+    };
+}
+
+fn main() {
+    'outer: loop {
+        let mut sys = System::new_all();
+    
+        print!("Print system information \n");
+        print!("m for memory \ns for system\nn for network\nc for cpu\nd for disk data\n");
+        let mut monitor_input = String::new();
+    
+        std::io::stdin()
+            .read_line(&mut monitor_input)
+            .expect("Failed to read line");
+    
+        match monitor_input.trim() {
+            "m" => memory_info(&mut sys),
+            "c" => modules::cpu::cpu_info(&mut sys),
+            "s" => system_meta_data(),
+            "n" => network_data(),
+            "d" => modules::disk::disk_data(),
+            _ => newlineprint!(format!("\nInvalid argument: {}", monitor_input)),
+        }
+
+        sleep(constants::DELAY);
+        println!("\n")
+       
+    }
+
+}
 
 fn memory_info(sys: &mut System) {
     
@@ -32,35 +54,22 @@ fn memory_info(sys: &mut System) {
     // First we update all information of our `System` struct.
     sys.refresh_all();
     
-    println!("=> system:");
+    newlineprint!("=> system:");
     // RAM and swap information:
     let mut total_memory = sys.total_memory().to_string();
-    let memory_parts = total_memory.split_at(2);
-    let total_memory_after_comma: String = memory_parts.1.chars().into_iter().take(3).collect();
-    println!("total memory: {0},{1} gigabytes", memory_parts.0, total_memory_after_comma);
-    println!("used memory : {} gigabytes", sys.used_memory());
-    println!("total swap  : {} gigabytes", sys.total_swap());
-    println!("used swap   : {} gigabytes", sys.used_swap());
-
-}
-
-fn cpu_info(sys: &mut System) {
-    // Wait till our cpu data is fetched
-    std::thread::sleep(sysinfo::MINIMUM_CPU_UPDATE_INTERVAL);
-    // Update cpu data
-    sys.refresh_cpu_usage();
-
-    let cpus = sys.cpus();
-    println!("NB CPUs: {}", cpus.len());
-    
-    for core in cpus {
-        println!("Core {0} {1} % in use", core.name(), core.cpu_usage().round());
-    }
+    newlineprint!(format!("total memory: {} gigabytes", bytes_to_gigabytes(sys.total_memory())));
+    newlineprint!(format!("used memory : {} gigabytes", bytes_to_gigabytes(sys.used_memory())));
+    newlineprint!(format!("free memory : {} gigabytes", bytes_to_gigabytes(sys.free_memory())));
+    newlineprint!(format!("available memory : {} gigabytes", bytes_to_gigabytes(sys.available_memory())));
+    newlineprint!(format!("total swap  : {} gigabytes", bytes_to_gigabytes(sys.total_swap())));
+    newlineprint!(format!("used swap   : {} gigabytes", bytes_to_gigabytes(sys.used_swap())));
 
 }
 
 fn system_meta_data() {
  // Display system information:
+    newlineprint!("=> system info:");
+
     println!("System name:             {:?}", System::name());
     println!("System kernel version:   {:?}", System::kernel_version());
     println!("System OS version:       {:?}", System::os_version());
@@ -70,6 +79,8 @@ fn system_meta_data() {
 
 fn network_data() {
     let networks = Networks::new_with_refreshed_list();
+    newlineprint!("=> network:");
+
     for (interface_name, data) in &networks {
     println!(
         "{interface_name}: {} B (down) / {} B (up)",
@@ -78,5 +89,21 @@ fn network_data() {
     );
     // If you want the amount of data received/transmitted since last call
     // to `Networks::refresh`, use `received`/`transmitted`.
+    }
+}
+
+pub fn bytes_to_gigabytes(value: u64) -> f32 {
+    value as f32 / constants::BYTES_IN_GB as f32
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn convert_to_gb() {
+        let gb_8: u64 = 8308269056;
+        let result = bytes_to_gigabytes(gb_8);
+        assert_eq!(result, 8.3082695);
     }
 }
