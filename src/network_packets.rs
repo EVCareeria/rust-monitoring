@@ -7,4 +7,3 @@ pub fn packets() {
         println!("received packet! {:?}", packet);
     }
 }
-

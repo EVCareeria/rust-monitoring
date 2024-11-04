@@ -1,8 +1,12 @@
 [package]
-name = "pc-health-cli"
+name = "monitoring_data"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 sysinfo = "0.31.4"
 pcap = "2.2.0"
+wasm-bindgen = "0.2.95"
+
+[lib]
+crate-type = ["cdylib", "rlib"]

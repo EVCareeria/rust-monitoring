@@ -18,11 +18,10 @@ pub fn cpu_info(sys: &mut System) {
 
     let cpus = sys.cpus();
     println!("NB CPUs: {}", cpus.len());
-    
+
     for core in cpus {
         println!("Core {}  name", core.name());
-        println!("Core {} % in use",core.cpu_usage());
+        println!("Core {} % in use", core.cpu_usage());
         println!("Core {}  frequency", core.frequency());
     }
-
 }
