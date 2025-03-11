@@ -27,8 +27,18 @@ pub fn bytes_to_gigabytes(value: u64) -> f32 {
 pub fn system_info() {
     'outer: loop {
         let mut sys = System::new_all();
+        
+        let load_avg = System::load_average();
+        println!(
+            "one minute: {}%, five minutes: {}%, fifteen minutes: {}%",
+            load_avg.one,
+            load_avg.five,
+            load_avg.fifteen,
+        );
+
+
         print!("Print system information \n");
-        print!("m for memory \ns for system\nn for network\nc for cpu\nd for disk data\nx for clearing the screen\n");
+        print!("m for memory \ns for system\nn for network\nc for cpu\nd for disk data\nt for temperature\nu for users data\nx for clearing the screen\n");
         let mut monitor_input = String::new();
 
         std::io::stdin()
@@ -37,16 +47,26 @@ pub fn system_info() {
 
         match monitor_input.trim() {
             "m" => modules::memory::memory_info(&mut sys),
+            "t" => component_data(),
             "c" => modules::cpu::cpu_info(&mut sys),
             "s" => system_meta_data(),
             "n" => network_data(),
             "d" => modules::disk::disk_data(),
+            "u" => modules::users::monitor_users(),
             "x" => println!("\r\x1b[2J\r\x1b[H"),
             _ => newlineprint!(format!("\nInvalid argument: {}", monitor_input)),
         }
 
         sleep(constants::DELAY);
         println!("\n")
+    }
+}
+
+fn component_data() {
+
+    let components = Components::new_with_refreshed_list();
+    for component in &components {
+        println!("{} {:?}°C", component.label(), component.temperature());
     }
 }
 

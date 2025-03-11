@@ -4,9 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-sysinfo = "0.31.4"
+sysinfo = "0.33.1"
 pcap = "2.2.0"
-wasm-bindgen = "0.2.95"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
