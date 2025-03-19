@@ -1,8 +1,10 @@
 use crate::shared_types::System;
 use crate::{bytes_to_gigabytes, newlineprint};
 
+use super::cpu::cpu_data;
+
 #[derive(Debug)]
-struct memory_data {
+pub struct memory_data {
     total_memory: f32,
     used_memory: f32,
     free_memory: f32,
@@ -37,4 +39,11 @@ pub fn memory_info(sys: &mut System) {
 
     let memory = memory_data::create_new(sys);
     memory.print_memory();
+}
+
+pub fn return_memory(sys: &mut System) -> memory_data {
+    sys.refresh_all();
+
+    let memory = memory_data::create_new(sys);
+    memory
 }

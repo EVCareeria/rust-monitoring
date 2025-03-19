@@ -4,7 +4,7 @@ use std::error::Error;
 pub fn monitor_users() {
     crate::newlineprint!(crate::colored(60, 40, 150,format!("Some user stuff")));
     let users = Command::new("w")
-        .spawn()
+        .output()
         .expect("w command failed to start");
     let ls = Command::new("last")
         .arg("-w")
@@ -16,7 +16,8 @@ pub fn monitor_users() {
         .output()
         .unwrap_or_else(|e| { panic!("failed to execute process: {}", e) });
     let output = String::from_utf8(last_logins.stdout).unwrap();
-    println!("users command: {:#?}", users);
+    let users_utf = String::from_utf8(users.stdout).unwrap();
+    println!("users command: {:#?}", users_utf);
     println!("last_logins command: {:#?}", output);
 
 }

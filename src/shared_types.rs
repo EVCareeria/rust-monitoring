@@ -3,7 +3,7 @@ pub use std::{
         mpsc::{self, Receiver, Sender},
         Arc, Mutex,
     },
-    thread::sleep,
+    thread::{spawn, sleep},
     time::Duration,
     process::{Command, Stdio},
 };

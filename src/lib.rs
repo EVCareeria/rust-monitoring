@@ -1,3 +1,5 @@
+use std::fmt::{Debug, Display};
+
 use crate::shared_types::*;
 
 mod constants;
@@ -7,21 +9,31 @@ mod shared_types;
 
 #[macro_export]
 macro_rules! newlineprint {
+    ($r:expr, $g:expr, $b:expr, $message:expr) => {
+        println!(
+            "\n{}",
+            crate::colored($r, $g, $b, format!("\n{}", $message))
+        );
+    };
+    // Match if no color values given
     ($message:expr) => {
         println!(
             "\n{}",
-            crate::colored(235, 240, 65, format!("\n{}", $message))
-        )
+            crate::colored(255, 255, 255, format!("\n{}", $message)) // default RGB (white)
+        );
     };
 }
 
-// RGB in order red, green, blue and text value as string
-pub fn colored(r: i32, g: i32, b: i32, text: String) -> String {
-    return format!("\x1B[38;2;{};{};{}m{}\x1B[0m", r, g, b, text);
+pub fn colored<T: std::fmt::Debug>(r: i32, g: i32, b: i32, text: T) -> String {
+    format!("\x1B[38;2;{};{};{}m{:?}\x1B[0m", r, g, b, text)
 }
 
 pub fn bytes_to_gigabytes(value: u64) -> f32 {
     value as f32 / constants::BYTES_IN_GB as f32
+}
+
+pub fn round_to_single_digit(val: f32) -> f32 {
+    (val * 10.0).round() / 10.0 
 }
 
 pub fn system_info() {
@@ -38,14 +50,22 @@ pub fn system_info() {
 
 
         print!("Print system information \n");
-        print!("m for memory \ns for system\nn for network\nc for cpu\nd for disk data\nt for temperature\nu for users data\nx for clearing the screen\n");
+        print!("k for keeep monitoring\nm for memory \ns for system\nn for network\nc for cpu\nd for disk data\nt for temperature\nu for users data\nx for clearing the screen\n");
         let mut monitor_input = String::new();
 
         std::io::stdin()
             .read_line(&mut monitor_input)
             .expect("Failed to read line");
 
+        let (tx, rx) = mpsc::channel();
+
+        spawn(move || {
+            let val = String::from("hi");
+            tx.send(val).unwrap();
+        });
         match monitor_input.trim() {
+            
+            "k" => modules::keep_monitoring::keep_monitoring(&mut sys),
             "m" => modules::memory::memory_info(&mut sys),
             "t" => component_data(),
             "c" => modules::cpu::cpu_info(&mut sys),
@@ -72,7 +92,7 @@ fn component_data() {
 
 fn system_meta_data() {
     // Display system information:
-    newlineprint!("=> system info:");
+    newlineprint!(0,0,0, "=> system info:");
 
     println!("System name:             {:?}", System::name());
     println!("System kernel version:   {:?}", System::kernel_version());
