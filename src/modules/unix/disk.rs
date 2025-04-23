@@ -40,7 +40,7 @@ pub fn disk_data() {
     let disks = Disks::new_with_refreshed_list();
     for disk in disks.list() {
         println!("disk: {:?}", disk);
-        let data = disk_data::create_new(disk);
+        let data: disk_data = disk_data::create_new(disk);
 
         if disk_info.contains(&data) {
             continue;

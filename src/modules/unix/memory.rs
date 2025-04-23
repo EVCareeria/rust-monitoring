@@ -1,7 +1,5 @@
 use crate::shared_types::System;
-use crate::{bytes_to_gigabytes, newlineprint};
-
-use super::cpu::cpu_data;
+use crate::{bytes_to_gigabytes};
 
 #[derive(Debug)]
 pub struct memory_data {

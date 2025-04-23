@@ -1,11 +1,17 @@
 use std::fmt::{Debug, Display};
-
 use crate::shared_types::*;
-
 mod constants;
 mod modules;
 mod network_packets;
 mod shared_types;
+
+#[cfg(target_os = "windows")]
+use modules::windows::{cpu, memory, keep_monitoring, users, disk};
+
+#[cfg(unix)]
+use modules::unix::{cpu, memory, keep_monitoring, users, disk};
+
+
 
 #[macro_export]
 macro_rules! newlineprint {
@@ -24,8 +30,8 @@ macro_rules! newlineprint {
     };
 }
 
-pub fn colored<T: std::fmt::Debug>(r: i32, g: i32, b: i32, text: T) -> String {
-    format!("\x1B[38;2;{};{};{}m{:?}\x1B[0m", r, g, b, text)
+pub fn colored<T: std::fmt::Display>(r: i32, g: i32, b: i32, text: T) -> String {
+    format!("\x1B[38;2;{};{};{}m{}\x1B[0m", r, g, b, text)
 }
 
 pub fn bytes_to_gigabytes(value: u64) -> f32 {
@@ -63,20 +69,39 @@ pub fn system_info() {
             let val = String::from("hi");
             tx.send(val).unwrap();
         });
-        match monitor_input.trim() {
+        
+        #[cfg(target_os = "windows")]{
+            match monitor_input.trim() {
             
-            "k" => modules::keep_monitoring::keep_monitoring(&mut sys),
-            "m" => modules::memory::memory_info(&mut sys),
-            "t" => component_data(),
-            "c" => modules::cpu::cpu_info(&mut sys),
-            "s" => system_meta_data(),
-            "n" => network_data(),
-            "d" => modules::disk::disk_data(),
-            "u" => modules::users::monitor_users(),
-            "x" => println!("\r\x1b[2J\r\x1b[H"),
-            _ => newlineprint!(format!("\nInvalid argument: {}", monitor_input)),
+                "k" => keep_monitoring::keep_monitoring(&mut sys),
+                "m" => memory::memory_info(&mut sys),
+                "t" => component_data(),
+                "c" => cpu::cpu_info(&mut sys),
+                "s" => system_meta_data(),
+                "n" => network_data(),
+                "d" => disk::disk_data(),
+                "u" => users::monitor_users(),
+                "x" => println!("\r\x1b[2J\r\x1b[H"),
+                _ => newlineprint!(format!("\nInvalid argument: {}", monitor_input)),
+            }
         }
 
+        #[cfg(unix)]{
+            match monitor_input.trim() {
+            
+                "k" => keep_monitoring::keep_monitoring(&mut sys),
+                "m" => memory::memory_info(&mut sys),
+                "t" => component_data(),
+                "c" => cpu::cpu_info(&mut sys),
+                "s" => system_meta_data(),
+                "n" => network_data(),
+                "d" => disk::disk_data(),
+                "u" => users::monitor_users(),
+                "x" => println!("\r\x1b[2J\r\x1b[H"),
+                _ => newlineprint!(format!("\nInvalid argument: {}", monitor_input)),
+            }
+        }
+    
         sleep(constants::DELAY);
         println!("\n")
     }
